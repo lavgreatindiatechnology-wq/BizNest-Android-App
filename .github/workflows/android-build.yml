@@ -5,12 +5,11 @@ on:
 
 jobs:
   build:
-    name: Build APK and AAB
     runs-on: ubuntu-latest
 
     steps:
 
-      - name: Checkout Project
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Java 17
@@ -19,31 +18,43 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Install Gradle 8.7
         run: |
-          wget https://services.gradle.org/distributions/gradle-8.7-bin.zip
+          wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip
           unzip -q gradle-8.7-bin.zip
           echo "$PWD/gradle-8.7/bin" >> $GITHUB_PATH
 
-      - name: Check Gradle Version
-        run: gradle --version
+      - name: Check Project Files
+        run: |
+          echo "Checking files..."
+          ls -la
+          ls -la app
+          gradle --version
 
       - name: Build Debug APK
-        run: gradle --no-daemon :app:assembleDebug --stacktrace
+        run: |
+          gradle clean
+          gradle :app:assembleDebug --stacktrace --info
 
       - name: Build Release AAB
-        run: gradle --no-daemon :app:bundleRelease --stacktrace
+        run: |
+          gradle :app:bundleRelease --stacktrace --info
 
-      - name: Upload APK
+      - name: Upload BizNest APK
         uses: actions/upload-artifact@v4
         with:
           name: BizNest-APK
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 30
 
-      - name: Upload AAB
+      - name: Upload BizNest AAB
         uses: actions/upload-artifact@v4
         with:
           name: BizNest-AAB
           path: app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
+          retention-days: 30
